@@ -6,11 +6,16 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	core_config "github.com/mishalyamets1/golang_todoapp/internal/core/config"
 	core_logger "github.com/mishalyamets1/golang_todoapp/internal/core/logger"
 	core_pgx_pool "github.com/mishalyamets1/golang_todoapp/internal/core/repository/postgres/pool/pgx"
 	core_http_middleware "github.com/mishalyamets1/golang_todoapp/internal/core/transport/http/middleware"
 	core_http_server "github.com/mishalyamets1/golang_todoapp/internal/core/transport/http/server"
+	tasks_postgres_repository "github.com/mishalyamets1/golang_todoapp/internal/features/tasks/repository/postgres"
+	task_service "github.com/mishalyamets1/golang_todoapp/internal/features/tasks/service"
+	tasks_transport "github.com/mishalyamets1/golang_todoapp/internal/features/tasks/transport/http"
 	users_repository_postgres "github.com/mishalyamets1/golang_todoapp/internal/features/users/repository/postgres"
 	users_service "github.com/mishalyamets1/golang_todoapp/internal/features/users/service"
 	user_transport_http "github.com/mishalyamets1/golang_todoapp/internal/features/users/transport/http"
@@ -18,16 +23,14 @@ import (
 )
 
 func main() {
-
+	cfg := core_config.NewConfigMust()
+	time.Local = cfg.TimeZone
 	ctx, cancel := signal.NotifyContext(
 		context.Background(),
 		syscall.SIGINT, syscall.SIGTERM,
 	)
 	defer cancel()
-
-	fmt.Println("Hello, todoapp")
 	
-
 	logger, err := core_logger.NewLogger(core_logger.NewConfigMust())
 
 	if err != nil {
@@ -35,6 +38,8 @@ func main() {
 		os.Exit(1)
 	}
 	defer logger.Close()
+
+	logger.Debug("application time zone", zap.Any("time_zone", time.Local))
 
 	logger.Debug("initializing new connection pool ")
 
@@ -51,6 +56,11 @@ func main() {
 	usersService := users_service.NewUsersService(usersRepository)
 	usersTransportHTTP := user_transport_http.NewUsersHTTPHandler(usersService)
 
+	logger.Debug("initializing feature", zap.String("feature", "tasks"))
+	tasksRepository := tasks_postgres_repository.NewTasksRespository(pool)
+	tasksService := task_service.NewTasksService(tasksRepository)
+	tasksTransportHTTP := tasks_transport.NewTasksHTTPHandler(tasksService)
+
 	logger.Debug("initializing http server")
 
 	httpServer := core_http_server.NewHTTPServer(
@@ -62,9 +72,10 @@ func main() {
 		core_http_middleware.Panic(),
 	)
 
-	apiVersionRouter := core_http_server.NewApiVersionRouter(core_http_server.ApiVersion1)
-	apiVersionRouter.RegisterRoutes(usersTransportHTTP.Routes()...)
-	httpServer.RegisterApiRouters(apiVersionRouter)
+	apiVersionRouter1 := core_http_server.NewApiVersionRouter(core_http_server.ApiVersion1)
+	apiVersionRouter1.RegisterRoutes(usersTransportHTTP.Routes()...)
+	apiVersionRouter1.RegisterRoutes(tasksTransportHTTP.Routes()...)
+	httpServer.RegisterApiRouters(apiVersionRouter1)
 
 	if err := httpServer.Run(ctx); err != nil {
 		logger.Error("HTTP server error", zap.Error(err))
