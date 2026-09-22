@@ -78,3 +78,12 @@ func (h *HTTPResponseHandler) JSONResponse(responseBody any, statusCode int)  {
 		h.log.Error("write HTTP response", zap.Error(err))
 	 }
 }
+
+func (h *HTTPResponseHandler) HTMLResponse(html []byte) {
+	h.rw.WriteHeader(http.StatusOK)
+	h.rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+	
+	if _, err := h.rw.Write(html); err != nil {
+		h.log.Error("write html http response", zap.Error(err)) 
+	}
+}
