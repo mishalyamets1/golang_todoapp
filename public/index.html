@@ -447,7 +447,7 @@
                     <p>Golang TODO API v1.0</p>
                 </div>
             </div>
-            <div class="api-badge" id="api-status">API: localhost:8080</div>
+            <div class="api-badge" id="api-status"></div>
         </header>
 
         <nav class="tabs">
@@ -583,8 +583,8 @@
     <div class="toast-container" id="toasts"></div>
 
     <script>
-        // Swagger: host=localhost:8080, basePath=/api/v1
-        const API_BASE = 'http://localhost:8080/api/v1';
+        // Swagger basePath=/api/v1 — всегда тот же хост, что и страница
+        const API_BASE = `${window.location.origin}/api/v1`;
 
         // --- API client (paths from swagger.yaml) ---
 
@@ -956,6 +956,8 @@
         });
 
         // --- Init ---
+
+        document.getElementById('api-status').textContent = `API: ${API_BASE}`;
 
         loadUsers();
         loadTasks();
