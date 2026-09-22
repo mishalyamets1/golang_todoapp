@@ -45,6 +45,20 @@ func (r *PatchTaskRequest) Validate() error {
 	return nil
 }
 
+// PatchTask godoc
+// @Summary Обновить задачу
+// @Description Частичное обновление задачи по ID
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param id path int true "ID задачи"
+// @Param request body PatchTaskRequest true "PatchTask тело запроса"
+// @Success 200 {object} PatchTaskResponse "Обновлённая задача"
+// @Failure 400 {object} core_http_response.ErrorResponse "Bad Request"
+// @Failure 404 {object} core_http_response.ErrorResponse "Not found"
+// @Failure 409 {object} core_http_response.ErrorResponse "Conflict"
+// @Failure 500 {object} core_http_response.ErrorResponse "Internal server error"
+// @Router /tasks/{id} [patch]
 func (h *TasksHTTPHandler) PatchTask(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
