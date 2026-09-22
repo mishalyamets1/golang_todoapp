@@ -15,6 +15,18 @@ type CreateUserRequest struct {
 }
 type CreateUserResponse UserDTOResponse
 
+
+// CreateUser godoc
+// @Summary Создать пользователя
+// @Description Создать нового пользователя в системе
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param request body CreateUserRequest true "CreateUser тело запроса"
+// @Success 201 {object} CreateUserResponse "Успешно созданный пользователь"
+// @Failure 400 {object} core_http_response.ErrorResponse "Bad Request"
+// @Failure 500 {object} core_http_response.ErrorResponse "Internal server error"
+// @Router /users [post]
 func (h *UsersHTTPHandler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	var request CreateUserRequest
 
